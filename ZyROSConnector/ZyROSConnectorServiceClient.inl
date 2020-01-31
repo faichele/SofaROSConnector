@@ -111,15 +111,6 @@ template <class ServiceType, class RequestType, class ResponseType>
 const ResponseType& ZyROSConnectorServiceClient<ServiceType, RequestType, ResponseType>::getResponse(size_t idx)
 {
     static ResponseType emptyResponse;
-    /*ResponseType response;
-    if (idx < m_responseQueue.size())
-    {
-        response = m_responseQueue.at(idx);
-        m_requestQueue[idx] = RequestType();
-        m_responseQueue[idx] = ResponseType();
-        m_clientCallStates[idx] = false;
-    }
-    return response;*/
 
     if (idx < m_responseQueue.size())
         return m_responseQueue.at(idx);

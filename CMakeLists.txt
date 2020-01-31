@@ -6,6 +6,8 @@ LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/lib)
 # For FindROS.cmake
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
+option(ZY_ROS_CONNECTOR_GENERATE_FACTORY_METHODS "Auto-generate factory methods for ROS topic and service clients/servers." OFF)
+
 message(STATUS "Adding SofaROSConnector plugins.")
 add_subdirectory(ZySOFAControllers)
 

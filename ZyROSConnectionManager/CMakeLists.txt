@@ -1,31 +1,8 @@
 project(ZyROSConnectionManager)
 
-# Build list of available ROS message types
-message(STATUS "Generating ROS message and service type header files.")
-SET(ROS_DISTRO "$ENV{ROS_DISTRO}")
-if ("${ROS_DISTRO}" STREQUAL "")
-    SET(ROS_DISTRO "melodic")
-endif()
-
-SET(ROS_INSTALL_PREFIX "$ENV{ROS_ROOT}")
-if ("${ROS_INSTALL_PREFIX}" STREQUAL "")
-    SET(ROS_INSTALL_PREFIX "/opt/ros/melodic")
-endif()
-
-message(STATUS "Calling list_ros_message_types.sh with arguments: \"${CMAKE_CURRENT_BINARY_DIR}\" \"${ROS_INSTALL_PREFIX}\" \"${ROS_DISTRO}\"")
-
-execute_process(COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/list_ros_message_types.sh" "${CMAKE_CURRENT_BINARY_DIR}" "${ROS_INSTALL_PREFIX}" "${ROS_DISTRO}" OUTPUT_VARIABLE ROS_MSG_TYPES OUTPUT_STRIP_TRAILING_WHITESPACE)
-message(STATUS "List of ROS message types: ${ROS_MSG_TYPES}")
-string(REPLACE "\n" ";" ROS_MSG_TYPES_LIST ${ROS_MSG_TYPES})
-foreach(ROS_MSG_TYPE ${ROS_MSG_TYPES_LIST})
-    message(STATUS "Message type: ${ROS_MSG_TYPE}")
-endforeach()
-
 set(HEADER_FILES
     initZyROSConnectionManager.h
     ZyROSConnectionManager.h
-    ${CMAKE_CURRENT_BINARY_DIR}/ZyROS_MessageType_Instantiations.h
-    ${CMAKE_CURRENT_BINARY_DIR}/ZyROS_ServiceType_Instantiations.h
 )
 
 set(SOURCE_FILES
