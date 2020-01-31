@@ -19,10 +19,13 @@
 #include <ZyROSConnector.h>
 #include <ZyROSConnectionManager.h>
 
-#include <ZyROSConnectorTopicPublisher.h>
 #include <ZyROSConnectorTopicSubscriber.h>
+#include <ZyROSConnectorTopicSubscriber.inl>
+#include <ZyROSConnectorTopicPublisher.h>
+#include <ZyROSConnectorTopicPublisher.inl>
 
 #include <ZyROSConnectorServiceClient.h>
+#include <ZyROSConnectorServiceClient.inl>
 #include <ZyROSConnectorServiceServer.h>
 #include <ZyROSConnectorServiceServer.inl>
 
@@ -46,7 +49,13 @@ namespace Zyklio
     using namespace Zyklio::ROSConnector;
     using namespace Zyklio::ROSConnectionManager;
 
-	struct RosConnectorTest : public ::testing::Test
+    template class ZyROSConnectorTopicSubscriber<rosgraph_msgs::Log>;
+    template class ZyROSConnectorTopicPublisher<rosgraph_msgs::Log>;
+    template class ZyROSConnectorServiceClient<roscpp::GetLoggers, roscpp::GetLoggersRequest, roscpp::GetLoggersResponse>;
+    template class ZyROSConnectorServiceClient<roscpp::SetLoggerLevel, roscpp::SetLoggerLevelRequest, roscpp::SetLoggerLevelResponse>;
+    template class ZyROSConnectorServiceClient<zyrosconnector_test::ArrayOfFloats, zyrosconnector_test::ArrayOfFloatsRequest, zyrosconnector_test::ArrayOfFloatsResponse>;
+
+struct RosConnectorTest : public ::testing::Test
 	{
 		public:
 			RosConnectorTest();
@@ -379,21 +388,6 @@ struct ArrayOfFloatsRequestHandler: public ZyROSConnectorServerRequestHandler<Re
         }
 };
 
-template class ZyROSConnectorServiceServerImpl<rospy_tutorials::AddTwoIntsRequest, rospy_tutorials::AddTwoIntsResponse, AddTwoIntsRequestHandler<rospy_tutorials::AddTwoIntsRequest, rospy_tutorials::AddTwoIntsResponse>>;
-
-class AddTwoIntsServiceServer: public ZyROSConnectorServiceServerImpl<rospy_tutorials::AddTwoIntsRequest, rospy_tutorials::AddTwoIntsResponse, AddTwoIntsRequestHandler<rospy_tutorials::AddTwoIntsRequest, rospy_tutorials::AddTwoIntsResponse>>
-{
-    public:
-    AddTwoIntsServiceServer(const std::string& service_uri):
-        ZyROSConnectorServiceServerImpl<rospy_tutorials::AddTwoIntsRequest, rospy_tutorials::AddTwoIntsResponse, AddTwoIntsRequestHandler<rospy_tutorials::AddTwoIntsRequest, rospy_tutorials::AddTwoIntsResponse>>(service_uri)
-    {
-
-    }
-
-    ~AddTwoIntsServiceServer()
-    {}
-};
-
 template <class RequestType, class ResponseType, class RequestHandler>
 class ArrayOfFloatsServiceServer: public ZyROSConnectorServiceServerImpl<RequestType, ResponseType, RequestHandler>
 {
@@ -611,7 +605,8 @@ int main(int argc, char** argv)
                 msg_info("ZyROSConnector_test") << "Removing topic subscriber.";
                 test_fixture.m_rosConnector->getROSConnector()->removeTopicListener(logClient);
 
-                // Test instantiation via factory methods
+                // Test instantiation via factory methods only if factory methods have been auto-generated
+#ifdef ZY_ROS_CONNECTOR_GENERATE_FACTORY_METHODS
                 boost::shared_ptr<ZyROSListener> log_sink_2 = ZyROSConnectorMessageSubscriberFactory::createTopicSubscriber(test_fixture.m_rosConnector->getRosNodeHandle(), "/ZyROSConnector_test", "rosgraph_msgs::Log");
                 boost::shared_ptr<ZyROSPublisher> log_source_2 = ZyROSConnectorMessagePublisherFactory::createTopicPublisher(test_fixture.m_rosConnector->getRosNodeHandle(), "/ZyROSConnector_test", "rosgraph_msgs::Log");
 
@@ -642,12 +637,20 @@ int main(int argc, char** argv)
                 test_fixture.m_rosConnector->getROSConnector()->removeTopicPublisher(log_source_2);
                 msg_info("ZyROSConnector_test") << "Removing topic subscriber.";
                 test_fixture.m_rosConnector->getROSConnector()->removeTopicListener(log_sink_2);
+#endif
 
                 // Test service client: Get and set logging parameters of the running roscore
                 if (getLoggersServiceExists)
                 {
                     msg_info("ZyROSConnector_test") << "Getting list of active logger instances in running roscore.";
+#ifdef ZY_ROS_CONNECTOR_GENERATE_FACTORY_METHODS
                     boost::shared_ptr<ZyROSServiceClient> getLoggersClient = ZyROSConnectorServiceClientFactory::createServiceClient(test_fixture.m_rosConnector->getRosNodeHandle(), "/rosout/get_loggers", "roscpp::GetLoggers");
+#else
+                    boost::shared_ptr<ZyROSServiceClient> getLoggersClient;
+                    ros::NodeHandlePtr nh_ptr;
+                    nh_ptr.reset(new ros::NodeHandle());
+                    getLoggersClient.reset(new ZyROSConnectorServiceClient<roscpp::GetLoggers, roscpp::GetLoggersRequest, roscpp::GetLoggersResponse>(nh_ptr, "/rosout/get_loggers"));
+#endif
                     if (getLoggersClient)
                     {
                         ZyROSConnectorServiceClient<roscpp::GetLoggers, roscpp::GetLoggersRequest, roscpp::GetLoggersResponse>* loggers_service_client = (ZyROSConnectorServiceClient<roscpp::GetLoggers, roscpp::GetLoggersRequest, roscpp::GetLoggersResponse>*)(getLoggersClient.get());
@@ -682,7 +685,14 @@ int main(int argc, char** argv)
                 if (setLoggerLevelServiceExists)
                 {
                     msg_info("ZyROSConnector_test") << "Setting logger level in running roscore.";
-                    boost::shared_ptr<ZyROSServiceClient> setLogLevelClient = ZyROSConnectorServiceClientFactory::createServiceClient(test_fixture.m_rosConnector->getRosNodeHandle(), "/rosout/set_logger_level", "roscpp::SetLoggerLevel");
+#ifdef ZY_ROS_CONNECTOR_GENERATE_FACTORY_METHODS
+                    boost::shared_ptr<ZyROSServiceClient> setLogLevelClient = ZyROSConnectorServiceClientFactory::createServiceClient(test_fixture.m_rosConnector->getRosNodeHandle(), "/rosout/set_logger_level", "roscpp::SetLoggerLevel");#
+#else
+                    ros::NodeHandlePtr nh_ptr;
+                    nh_ptr.reset(new ros::NodeHandle());
+                    boost::shared_ptr<ZyROSServiceClient> setLogLevelClient;
+                    setLogLevelClient.reset(new ZyROSConnectorServiceClient<roscpp::SetLoggerLevel, roscpp::SetLoggerLevelRequest, roscpp::SetLoggerLevelResponse>(nh_ptr, "/rosout/set_logger_level"));
+#endif
                     if (setLogLevelClient)
                     {
                         ZyROSConnectorServiceClient<roscpp::SetLoggerLevel, roscpp::SetLoggerLevelRequest, roscpp::SetLoggerLevelResponse>* log_level_client = (ZyROSConnectorServiceClient<roscpp::SetLoggerLevel, roscpp::SetLoggerLevelRequest, roscpp::SetLoggerLevelResponse>*)(setLogLevelClient.get());
